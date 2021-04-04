@@ -1,0 +1,263 @@
+openapi: 3.0.2
+
+info:
+  title: Task manager api
+  version: 1.0.0
+  description: Task manager api
+  contact:
+      name: Ali Heydarli
+      email: ali.heyderli@gmail.com
+
+servers:
+  - url: http://127.0.0.1:5000/api/v1
+    description: Development server
+  - url: http://lookup.sixsecondlab.com/api/v1
+    description: Production server
+
+paths:
+  /signup:
+    post:
+      operationId: app.api.controllers.auth.signup.controller.post
+      summary: Signup user and get user authentication token
+      tags:
+        - auth
+      description: Enpoint that registers user and returns authentication token
+      requestBody:
+        $ref: '#/components/requestBodies/Signup'
+      responses:
+        '200':
+          $ref: '#/components/responses/Token'
+        default:
+          $ref: '#/components/responses/Problem'
+  /auth:
+    post:
+      summary: Get user authentication token
+      tags:
+        - auth
+      description: Enpoint that returns authentication token
+      requestBody:
+        $ref: '#/components/requestBodies/Auth'
+      responses:
+        '200':
+          $ref: '#/components/responses/Token'
+        default:
+          $ref: '#/components/responses/Problem'
+  /refresh:
+    post:
+      operationId: app.api.controllers.auth.refresh.controller.post
+      summary: Refresh access token
+      tags:
+        - auth
+      description: Enpoint that returns refreshed authentication token
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Token'
+        default:
+          $ref: '#/components/responses/Problem'
+  /user:
+    get:
+      summary: Get user information
+      tags:
+        - user
+      description: Enpoint that returns user information
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/User'
+        default:
+          $ref: '#/components/responses/Problem'
+  /task:
+    post:
+      summary: Create task
+      tags:
+        - task
+      description: Enpoint that creates task
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: '#/components/requestBodies/Task'
+      responses:
+        '200':
+          $ref: '#/components/responses/Task'
+        default:
+          $ref: '#/components/responses/Problem'
+  /status/{task-id}:
+    get:
+      summary: Get task status
+      tags:
+        - task
+      description: Enpoint that returns task status
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          $ref: '#/components/responses/TaskResult'
+        default:
+          $ref: '#/components/responses/Problem'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      x-bearerInfoFunc: flask_jwt_extended.decode_token
+  parameters:
+    AuthParam:
+      name: Authorization
+      in: header
+      required: true
+      description: an authorization header `Bearer {jwt_token}`
+      schema:
+        type: string
+    TaskId:
+      name: task-id
+      in: path
+      required: true
+      description: Task task_id
+      example: '024c8d63-83d7-4abe-ac4f-0c23fb8d8f26'
+      schema:
+        type: string
+        format: uuid
+  responses:
+    Token:
+      description: User authentication token
+      content:
+        application/json:
+          schema:
+            type: object
+    Problem:
+      description: |
+        error occurred - see status code and problem object for more information
+      content:
+        application/problem+json:
+          schema:
+            type: object
+    User:
+      description: User data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/User'
+    Task:
+      description: Task data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Task'
+    TaskResult:
+      description: Task data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TaskResult'
+  requestBodies:
+    Signup:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SignupInput'
+    Auth:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthInput'
+    Task:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TaskInput'
+  schemas:
+    SignupInput:
+      type: object
+      description: Signup Payload
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example:
+            foobar@mail.com
+        password:
+          type: string
+    AuthInput:
+      type: object
+      description: Authentication Payload
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example:
+            foobar@mail.com
+        password:
+          type: string
+          example:
+            password
+    User:
+      type: object
+      description: Authentication Payload
+      properties:
+        id:
+          type: number
+          example:
+            145
+        name:
+          type: string
+          example:
+            Darth Vader
+        email:
+          type: string
+          format: email
+          example:
+            foobar@mail.com
+        created_at:
+            type: string
+            format: date-time
+
+    TaskInput:
+      type: object
+      description: Task Payload
+      required:
+        - ip_address
+      properties:
+        ip_address:
+          type: string
+          example:
+            192.168.0.1
+    Task:
+      allOf:
+        - $ref: '#/components/schemas/TaskInput'
+        - type: object
+          properties:
+            id:
+              type: number
+              example:
+                190x
+            task_id:
+              type: string
+              format: uuid
+            created_at:
+              type: string
+              format: date-time
+    TaskResult:
+      type: object
+      properties:
+        status:
+          type: string
+          example:
+            SUCCESS
+        data:
+          type: object
+
