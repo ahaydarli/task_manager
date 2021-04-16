@@ -17,8 +17,7 @@ def user_exists():
             if not user:
                 return problem(status=404, title='User does not exists',
                                detail='User does not exists')
-            else:
-                return fn(*args, **kwargs)
+            return fn(*args, **kwargs)
 
         return decorator
 
